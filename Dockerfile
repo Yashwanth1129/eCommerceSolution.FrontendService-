@@ -1,21 +1,12 @@
-# Stage 1: Build Angular SSR app
-FROM node:22 AS build
+# Build stage
+FROM node:22 as build
 WORKDIR /app
-
-COPY package*.json ./
-RUN npm install
-
 COPY . .
+RUN npm install
 RUN npm run build
 
-# Stage 2: Run SSR server
-FROM node:22
-WORKDIR /app
-
-COPY --from=build /app/dist /app/dist
-COPY package*.json ./
-RUN npm install --omit=dev
-
-EXPOSE 4000
-
-CMD ["node", "dist/users-service-angular-app/server/main.js"]
+# Serve stage
+FROM nginx:alpine
+COPY --from=build /app/dist/users-service-angular-app/ /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
